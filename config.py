@@ -13,3 +13,9 @@ class Config:
         self.initial_infected = 25  # Liczba początkowo zakażonych agentów
         self.immunity_loss_rate = 0.02
         self.immunity_loss_period = 30
+        self.change_direction_proba = 0.1
+
+        self.num_central_locations = 1
+        self.central_location_size = 50
+        self.central_location_visit_proba = 0.01
+        self.frames_spent_in_central_location = 10

@@ -7,15 +7,22 @@ import time
 
 from agent import Agent
 from model import Model
+from central_location import CentralLocation
+
 
 class Simulation:
     def __init__(self, config):
         self.config = config
-        self.agents = [Agent(i, random.randint(0, config.width), random.randint(0, config.height)) for i in range(config.num_agents)]
+        self.agents = [Agent(i, random.randint(0, config.width), random.randint(0, config.height)) for i in
+                       range(config.num_agents)]
+        self.central_locations = [CentralLocation(config.width // 2 - config.central_location_size // 2,
+                                                  config.height // 2 - config.central_location_size // 2,
+                                                  config.central_location_size)
+                                  for _ in range(config.num_central_locations)]
         for i in range(10):
             self.agents[i].update_state("I")
         self.model = Model(config)
-        
+
         self.state_history = []  # Lista do przechowywania historii stanów
 
     def run(self, steps, screen, clock, gif_filename):
@@ -30,6 +37,9 @@ class Simulation:
 
             # Ustalenie tła i rysowanie agentów
             screen.fill((255, 255, 255))  # Tło białe
+
+            for central_location in self.central_locations:
+                central_location.draw(screen)
 
             self.step(screen)
 
@@ -46,7 +56,7 @@ class Simulation:
             steps -= 1
 
         # Zapisanie klatek jako GIF
-        if frames:            
+        if frames:
             frames[0].save(gif_filename, save_all=True, append_images=frames[1:], optimize=True, duration=100, loop=0)
 
         # Rysowanie wykresu
@@ -57,15 +67,16 @@ class Simulation:
     def step(self, screen):
         """Przeprowadzenie jednego kroku symulacji."""
         for agent in self.agents:
-            agent.step(self.agents, self.config, screen, self.config.width, self.config.height)  # Wykonanie kroku dla każdego agenta
+            agent.step(self.agents, self.config, screen, self.central_locations, self.config.width,
+                       self.config.height)  # Wykonanie kroku dla każdego agenta
 
     def record_state(self):
         """Zapisuje liczbę agentów w każdym stanie w danym momencie."""
         state_counts = {"S": 0, "E": 0, "I": 0, "R": 0, "D": 0}
-        
+
         for agent in self.agents:
             state_counts[agent.state] += 1
-        
+
         # Dodajemy stan do historii
         self.state_history.append(state_counts)
 
