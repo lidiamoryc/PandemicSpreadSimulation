@@ -2,16 +2,45 @@ import random
 import pygame
 import math
 
+
 class Agent:
     def __init__(self, id, x, y, state="S"):
         self.id = id  # Unikalny identyfikator agenta
         self.state = state  # Stan agenta: S, E, I, R, D
         self.x = x  # Pozycja X
         self.y = y  # Pozycja Y
+        self.destination_x = 0
+        self.destination_y = 0   # Użyte do quick travel
         self.size = 5  # Rozmiar agenta
+        self.speed = 2
         self.time_in_state = 0  # Czas spędzony w aktualnym stanie
-        self.direction_x = random.choice([-1, 1]) * 1.7  # Losowy kierunek poruszania się w poziomie
-        self.direction_y = random.choice([-1, 1]) * 1.7  # Losowy kierunek poruszania się w pionie
+        self.direction_x, self.direction_y = self.assign_random_direction()
+        self.central_location = None
+        self.quick_travelling = False
+        self.quick_travelling_counter = 0
+        self.quick_travel_frames = 15
+        self.time_to_spend_in_central_location = 0
+        self.quarantined = False
+
+    def assign_random_direction(self):
+        vector_length = 0
+
+        while vector_length == 0.0:
+            distance_x = random.uniform(-1, 1)
+            distance_y = random.uniform(-1, 1)
+
+            vector_length = (distance_x**2 + distance_y**2)**0.5
+            if vector_length == 0:
+                continue
+
+            distance_x /= vector_length
+            distance_x *= self.speed
+
+            distance_y /= vector_length
+            distance_y *= self.speed
+
+            return distance_x, distance_y
+
 
     def update_state(self, new_state):
         """Zaktualizowanie stanu agenta i resetowanie czasu w danym stanie."""
@@ -57,25 +86,104 @@ class Agent:
 
     def state_R(self, config):
         if random.random() < config.immunity_loss_rate and self.time_in_state >= config.immunity_loss_period:
-            self.update_state("S") 
+            self.update_state("S")
 
     def distance_to(self, other_agent):
         """Obliczenie odległości między dwoma agentami."""
         return math.sqrt((self.x - other_agent.x) ** 2 + (self.y - other_agent.y) ** 2)
 
     def move(self, width, height):
+        """Poruszanie agenta po planszy (odbicie od krawędzi)."""
         if self.state == "D":
             return
 
-        """Poruszanie agenta po planszy (odbicie od krawędzi)."""
+        if self.quick_travelling:
+            self.quick_travelling_counter += 1
+
+            if self.quick_travelling_counter >= self.quick_travel_frames:
+                self.quick_travelling = False
+                self.x, self.y = self.destination_x, self.destination_y
+                self.direction_x, self.direction_y = self.assign_random_direction()
+
         self.x += self.direction_x
         self.y += self.direction_y
 
+        if self.quick_travelling:
+            return
+
+        agent_in_central_location = self.central_location is not None
+
+        left_bound_x, right_bound_x, upper_bound_y, bottom_bound_y = 0, width, 0, height
+        if agent_in_central_location:
+            left_bound_x = self.central_location.x
+            right_bound_x = self.central_location.x + self.central_location.size
+            upper_bound_y = self.central_location.y
+            bottom_bound_y = self.central_location.y + self.central_location.size
+
         # Odbicie od krawędzi
-        if self.x <= 0 or self.x >= width - self.size:
+        if self.x <= left_bound_x or self.x >= right_bound_x - self.size:
             self.direction_x *= -1
-        if self.y <= 0 or self.y >= height - self.size:
+            self.x += self.direction_x * 2
+        if self.y <= upper_bound_y or self.y >= bottom_bound_y - self.size:
             self.direction_y *= -1
+            self.y += self.direction_y * 2
+
+
+    def direct_to_central_location(self):
+        """Skierowanie agenta w kierunku centrum przypisanej do niego Central Location"""
+
+        center_x = self.central_location.x + self.central_location.size // 2
+        center_y = self.central_location.y + self.central_location.size // 2
+
+        self.quick_travel_to_coordinates(center_x, center_y)
+
+    def quick_travel_to_coordinates(self, x, y):
+        """Skierowanie agenta w kierunku określonym przez współrzędne. Agent będzie przemieszczał się bardzo szybko -
+        funkcja użyta w przypadku skierowania agenta do CentralLocation/Quarantine, albo do wychodzenia z nich"""
+
+        self.destination_x, self.destination_y = x, y
+        direction_x = x - self.x
+        direction_y = y - self.y
+
+        self.direction_x = direction_x / self.quick_travel_frames
+        self.direction_y = direction_y / self.quick_travel_frames
+        self.quick_travelling_counter = 0
+        self.quick_travelling = True
+
+    def change_direction(self, config):
+        if self.quick_travelling:
+            return
+        if random.random() < config.change_direction_proba:
+            self.direction_x, self.direction_y = self.assign_random_direction()
+
+    def visit_central_location(self, config, central_locations, width, height):
+        if len(central_locations) == 0 or self.quarantined:
+            return
+
+        if self.central_location and self.quick_travelling is False:
+            self.time_to_spend_in_central_location -= 1
+            if self.time_to_spend_in_central_location <= 0:
+                self.assign_central_location(None, width, height)
+            return
+        if random.random() < config.central_location_visit_proba:
+            self.time_to_spend_in_central_location = config.frames_spent_in_central_location
+            self.assign_central_location(random.choice(central_locations), width, height)
+
+    def assign_central_location(self, central_location, width, height):
+        self.central_location = central_location
+        if central_location is None:
+            self.destination_x, self.destination_y = random.randint(0, width), random.randint(0, height)
+            self.quick_travel_to_coordinates(self.destination_x, self.destination_y)
+        else:
+            self.direct_to_central_location()
+
+    def visit_quarantine(self, config, quarantine, width, height):
+        if self.state == 'I' and not self.quarantined and random.random() < config.quarantine_visit_proba:
+            self.quarantined = True
+            self.assign_central_location(quarantine, width, height)
+        elif self.state == 'R' and self.quarantined:
+            self.quarantined = False
+            self.assign_central_location(None, width, height)
 
     def draw(self, screen, config):
         """Rysowanie agenta na ekranie."""
@@ -90,14 +198,17 @@ class Agent:
         elif self.state == "E":
             return (255, 255, 0)
         elif self.state == "I":
-            return (255, 0, 0) 
+            return (255, 0, 0)
         elif self.state == "R":
-            return (0, 255, 0) 
+            return (0, 255, 0)
         elif self.state == "D":
             return (0, 0, 0)
 
-    def step(self, agents, config, screen, width, height):
+    def step(self, agents, config, screen, central_locations, quarantine, width, height):
         """Aktualizacja agenta: poruszanie się, rysowanie i przejście stanu."""
+        self.visit_central_location(config, central_locations, width, height)
+        self.visit_quarantine(config, quarantine, width, height)
+        self.change_direction(config)
         self.move(width, height)  # Poruszanie
         self.transition(agents, config)  # Aktualizacja stanu
         self.draw(screen, config)  # Rysowanie agenta
