@@ -9,13 +9,16 @@ class Agent:
         self.state = state  # Stan agenta: S, E, I, R, D
         self.x = x  # Pozycja X
         self.y = y  # Pozycja Y
+        self.destination_x = 0
+        self.destination_y = 0   # Użyte do quick travel
         self.size = 5  # Rozmiar agenta
         self.speed = 2
         self.time_in_state = 0  # Czas spędzony w aktualnym stanie
         self.direction_x, self.direction_y = self.assign_random_direction()
         self.central_location = None
-        self.moving_to_central_location = False
-        self.moving_out_of_central_location = False
+        self.quick_travelling = False
+        self.quick_travelling_counter = 0
+        self.quick_travel_frames = 10
         self.time_to_spend_in_central_location = 0
 
     def assign_random_direction(self):
@@ -93,21 +96,18 @@ class Agent:
         if self.state == "D":
             return
 
-        if not self.is_in_central_location() and not self.moving_to_central_location:
-            self.moving_to_central_location = True
-            self.direct_to_central_location()
-            return
-        elif self.is_in_central_location() and self.moving_to_central_location:
-            self.moving_to_central_location = False
-            self.direction_x, self.direction_y = self.assign_random_direction()
-            self.x = self.central_location.x + self.central_location.size // 2
-            self.y = self.central_location.y + self.central_location.size // 2
+        if self.quick_travelling:
+            self.quick_travelling_counter += 1
 
+            if self.quick_travelling_counter >= self.quick_travel_frames:
+                self.quick_travelling = False
+                self.x, self.y = self.destination_x, self.destination_y
+                self.direction_x, self.direction_y = self.assign_random_direction()
 
         self.x += self.direction_x
         self.y += self.direction_y
 
-        agent_in_central_location = not (self.central_location is None or self.moving_to_central_location)
+        agent_in_central_location = not (self.central_location is None or self.quick_travelling)
 
         left_bound_x, right_bound_x, upper_bound_y, bottom_bound_y = 0, width, 0, height
         if agent_in_central_location:
@@ -129,11 +129,47 @@ class Agent:
         center_x = self.central_location.x + self.central_location.size // 2
         center_y = self.central_location.y + self.central_location.size // 2
 
-        direction_x = center_x - self.x
-        direction_y = center_y - self.y
+        self.quick_travel_to_coordinates(center_x, center_y)
 
-        self.direction_x = direction_x / 10
-        self.direction_y = direction_y / 10
+    def quick_travel_to_coordinates(self, x, y):
+        """Skierowanie agenta w kierunku określonym przez współrzędne. Agent będzie przemieszczał się bardzo szybko -
+        funkcja użyta w przypadku skierowania agenta do CentralLocation/Quarantine, albo do wychodzenia z nich"""
+
+        self.destination_x, self.destination_y = x, y
+        direction_x = x - self.x
+        direction_y = y - self.y
+
+        self.direction_x = direction_x / self.quick_travel_frames
+        self.direction_y = direction_y / self.quick_travel_frames
+        self.quick_travelling_counter = 0
+        self.quick_travelling = True
+
+    def change_direction(self, config):
+        if self.quick_travelling:
+            return
+        if random.random() < config.change_direction_proba:
+            self.direction_x, self.direction_y = self.assign_random_direction()
+
+    def visit_central_location(self, config, central_locations, width, height):
+        if len(central_locations) == 0:
+            return
+
+        if self.central_location and self.quick_travelling is False:
+            self.time_to_spend_in_central_location -= 1
+            if self.time_to_spend_in_central_location <= 0:
+                self.assign_central_location(None, width, height)
+            return
+        if random.random() < config.central_location_visit_proba:
+            self.time_to_spend_in_central_location = config.frames_spent_in_central_location
+            self.assign_central_location(random.choice(central_locations), width, height)
+
+    def assign_central_location(self, central_location, width, height):
+        self.central_location = central_location
+        if central_location is None:
+            self.destination_x, self.destination_y = random.randint(0, width), random.randint(0, height)
+            self.quick_travel_to_coordinates(self.destination_x, self.destination_y)
+        else:
+            self.direct_to_central_location()
 
 
     def draw(self, screen, config):
@@ -157,39 +193,9 @@ class Agent:
 
     def step(self, agents, config, screen, central_locations, width, height):
         """Aktualizacja agenta: poruszanie się, rysowanie i przejście stanu."""
-        self.visit_central_location(config, central_locations)
+        self.visit_central_location(config, central_locations, width, height)
         self.change_direction(config)
         self.move(width, height)  # Poruszanie
         self.transition(agents, config)  # Aktualizacja stanu
         self.draw(screen, config)  # Rysowanie agenta
         self.increment_time_in_state()  # Zwiększanie licznika czasu w danym stanie
-
-    def visit_central_location(self, config, central_locations):
-        if len(central_locations) == 0:
-            return
-
-        if self.central_location and self.moving_to_central_location is False:
-            self.time_to_spend_in_central_location -= 1
-            if self.time_to_spend_in_central_location <= 0:
-                self.assign_central_location(None)
-            return
-        if random.random() < config.central_location_visit_proba:
-            self.time_to_spend_in_central_location = config.frames_spent_in_central_location
-            self.assign_central_location(random.choice(central_locations))
-
-    def change_direction(self, config):
-        if self.moving_to_central_location or self.moving_out_of_central_location:
-            return
-        if random.random() < config.change_direction_proba:
-            self.direction_x, self.direction_y = self.assign_random_direction()
-
-    def assign_central_location(self, central_location):
-        self.central_location = central_location
-
-    def is_in_central_location(self):
-        if self.central_location is None:
-            return True
-
-        return self.central_location.x <= self.x <= self.central_location.x + self.central_location.size and \
-            self.central_location.y <= self.y <= self.central_location.y + self.central_location.size
-
