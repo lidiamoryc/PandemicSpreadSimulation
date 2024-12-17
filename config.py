@@ -17,5 +17,8 @@ class Config:
 
         self.num_central_locations = 1
         self.central_location_size = 50
-        self.central_location_visit_proba = 0.01
-        self.frames_spent_in_central_location = 10
+        self.central_location_visit_proba = 0.005
+        self.frames_spent_in_central_location = 50
+
+        self.quarantine = True
+        self.quarantine_visit_proba = 0.07

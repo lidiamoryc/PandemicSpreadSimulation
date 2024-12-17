@@ -13,12 +13,22 @@ from central_location import CentralLocation
 class Simulation:
     def __init__(self, config):
         self.config = config
-        self.agents = [Agent(i, random.randint(0, config.width), random.randint(0, config.height)) for i in
+
+        self.quarantine = CentralLocation(config.width - config.central_location_size,
+                                          config.height - config.central_location_size,
+                                          config.central_location_size) if config.quarantine else None
+        self.board_width, self.board_height = (config.width, config.height) if self.quarantine is None \
+            else (config.width - self.quarantine.size - config.infection_radius * 2,
+                  config.height - self.quarantine.size - config.infection_radius * 2)
+
+        self.agents = [Agent(i, random.randint(0, self.board_width), random.randint(0, self.board_height)) for i in
                        range(config.num_agents)]
-        self.central_locations = [CentralLocation(config.width // 2 - config.central_location_size // 2,
-                                                  config.height // 2 - config.central_location_size // 2,
+
+        self.central_locations = [CentralLocation(self.board_width // 2 - config.central_location_size // 2,
+                                                  self.board_height // 2 - config.central_location_size // 2,
                                                   config.central_location_size)
                                   for _ in range(config.num_central_locations)]
+
         for i in range(10):
             self.agents[i].update_state("I")
         self.model = Model(config)
@@ -40,6 +50,13 @@ class Simulation:
 
             for central_location in self.central_locations:
                 central_location.draw(screen)
+
+            if self.quarantine:
+                self.quarantine.draw(screen)
+                pygame.draw.rect(screen,
+                                 (0, 0, 0),
+                                 pygame.Rect(0, 0, self.board_width, self.board_height), 2)
+
 
             self.step(screen)
 
@@ -67,8 +84,8 @@ class Simulation:
     def step(self, screen):
         """Przeprowadzenie jednego kroku symulacji."""
         for agent in self.agents:
-            agent.step(self.agents, self.config, screen, self.central_locations, self.config.width,
-                       self.config.height)  # Wykonanie kroku dla każdego agenta
+            agent.step(self.agents, self.config, screen, self.central_locations, self.quarantine,
+                       self.board_width, self.board_height)  # Wykonanie kroku dla każdego agenta
 
     def record_state(self):
         """Zapisuje liczbę agentów w każdym stanie w danym momencie."""

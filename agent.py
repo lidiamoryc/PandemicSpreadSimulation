@@ -18,8 +18,9 @@ class Agent:
         self.central_location = None
         self.quick_travelling = False
         self.quick_travelling_counter = 0
-        self.quick_travel_frames = 10
+        self.quick_travel_frames = 15
         self.time_to_spend_in_central_location = 0
+        self.quarantined = False
 
     def assign_random_direction(self):
         vector_length = 0
@@ -107,7 +108,10 @@ class Agent:
         self.x += self.direction_x
         self.y += self.direction_y
 
-        agent_in_central_location = not (self.central_location is None or self.quick_travelling)
+        if self.quick_travelling:
+            return
+
+        agent_in_central_location = self.central_location is not None
 
         left_bound_x, right_bound_x, upper_bound_y, bottom_bound_y = 0, width, 0, height
         if agent_in_central_location:
@@ -119,8 +123,10 @@ class Agent:
         # Odbicie od krawędzi
         if self.x <= left_bound_x or self.x >= right_bound_x - self.size:
             self.direction_x *= -1
+            self.x += self.direction_x * 2
         if self.y <= upper_bound_y or self.y >= bottom_bound_y - self.size:
             self.direction_y *= -1
+            self.y += self.direction_y * 2
 
 
     def direct_to_central_location(self):
@@ -151,7 +157,7 @@ class Agent:
             self.direction_x, self.direction_y = self.assign_random_direction()
 
     def visit_central_location(self, config, central_locations, width, height):
-        if len(central_locations) == 0:
+        if len(central_locations) == 0 or self.quarantined:
             return
 
         if self.central_location and self.quick_travelling is False:
@@ -171,6 +177,13 @@ class Agent:
         else:
             self.direct_to_central_location()
 
+    def visit_quarantine(self, config, quarantine, width, height):
+        if self.state == 'I' and not self.quarantined and random.random() < config.quarantine_visit_proba:
+            self.quarantined = True
+            self.assign_central_location(quarantine, width, height)
+        elif self.state == 'R' and self.quarantined:
+            self.quarantined = False
+            self.assign_central_location(None, width, height)
 
     def draw(self, screen, config):
         """Rysowanie agenta na ekranie."""
@@ -191,9 +204,10 @@ class Agent:
         elif self.state == "D":
             return (0, 0, 0)
 
-    def step(self, agents, config, screen, central_locations, width, height):
+    def step(self, agents, config, screen, central_locations, quarantine, width, height):
         """Aktualizacja agenta: poruszanie się, rysowanie i przejście stanu."""
         self.visit_central_location(config, central_locations, width, height)
+        self.visit_quarantine(config, quarantine, width, height)
         self.change_direction(config)
         self.move(width, height)  # Poruszanie
         self.transition(agents, config)  # Aktualizacja stanu
