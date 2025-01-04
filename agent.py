@@ -92,6 +92,34 @@ class Agent:
         """Obliczenie odległości między dwoma agentami."""
         return math.sqrt((self.x - other_agent.x) ** 2 + (self.y - other_agent.y) ** 2)
 
+    def calculate_repulsion(self, agents, config):
+        repulsion_x, repulsion_y = 0, 0
+        for agent in agents:
+            if agent == self:
+                continue
+
+            distance = self.distance_to(agent)
+            if distance > config.social_distancing_repulsion_radius:
+                continue
+
+            repulsion_x += (-(agent.x - self.x) / distance ** 2) * config.social_distancing_repulsion_force
+            repulsion_y += (-(agent.y - self.y) / distance ** 2) * config.social_distancing_repulsion_force
+
+        self.direction_x += repulsion_x
+        self.direction_y += repulsion_y
+
+        vector_length = (self.direction_x ** 2 + self.direction_y ** 2) ** 0.5
+        if vector_length == 0:
+            return
+
+        self.direction_x /= vector_length
+        self.direction_x *= self.speed
+
+        self.direction_y /= vector_length
+        self.direction_y *= self.speed
+
+
+
     def move(self, width, height):
         """Poruszanie agenta po planszy (odbicie od krawędzi)."""
         if self.state == "D":
@@ -211,6 +239,8 @@ class Agent:
         self.visit_central_location(config, central_locations, width, height)
         self.visit_quarantine(config, quarantine, width, height)
         self.change_direction(config)
+        if config.social_distancing_repulsion_force > 0:
+            self.calculate_repulsion(agents, config)
         self.move(width, height)  # Poruszanie
         self.transition(agents, config)  # Aktualizacja stanu
         self.draw(screen, config)  # Rysowanie agenta

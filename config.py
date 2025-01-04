@@ -1,6 +1,6 @@
 class Config:
     def __init__(self):
-        self.num_agents = 600  # Liczba agentów w populacji
+        self.num_agents = 500  # Liczba agentów w populacji
         self.infection_rate = 0.03  # Prawdopodobieństwo zarażenia zdrowego agenta
         self.incubation_period = 15  # Prawdopodobieństwo przejścia z narażenia do zakażenia
         self.recovery_rate = 0.02  # Prawdopodobieństwo wyzdrowienia
@@ -10,7 +10,7 @@ class Config:
         self.width = 800  # Szerokość planszy
         self.height = 800 # Wysokość planszy
         self.infection_radius = 25  # Promień zakażenia, w którym agent może zarazić innych
-        self.initial_infected = 30  # Liczba początkowo zakażonych agentów
+        self.initial_infected = 0  # Liczba początkowo zakażonych agentów
         self.immunity_loss_rate = 0.02
         self.immunity_loss_period = 30
         self.change_direction_proba = 0.1
@@ -20,5 +20,8 @@ class Config:
         self.central_location_visit_proba = 0.005
         self.frames_spent_in_central_location = 50
 
-        self.quarantine = True
+        self.quarantine = False
         self.quarantine_visit_proba = 0.04
+
+        self.social_distancing_repulsion_force = 30
+        self.social_distancing_repulsion_radius = 50
