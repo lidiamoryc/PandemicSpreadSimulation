@@ -154,10 +154,10 @@ class Agent:
             bottom_bound_y = self.central_location.y + self.central_location.size
 
         # Odbicie od krawędzi
-        if self.x <= left_bound_x or self.x >= right_bound_x - self.size:
+        if self.x <= left_bound_x + self.size or self.x >= right_bound_x - self.size:
             self.direction_x *= -1
             self.x += self.direction_x * 2
-        if self.y <= upper_bound_y or self.y >= bottom_bound_y - self.size:
+        if self.y <= upper_bound_y + self.size or self.y >= bottom_bound_y - self.size:
             self.direction_y *= -1
             self.y += self.direction_y * 2
 
@@ -211,6 +211,8 @@ class Agent:
             self.direct_to_central_location()
 
     def visit_quarantine(self, config, quarantine, width, height):
+        if not config.quarantine:
+            return
         if self.state == 'I' and not self.quarantined and random.random() < config.quarantine_visit_proba:
             self.quarantined = True
             self.assign_central_location(quarantine, width, height)

@@ -21,7 +21,7 @@ class Simulation:
             else (config.width - self.quarantine.size - config.infection_radius * 2,
                   config.height - self.quarantine.size - config.infection_radius * 2)
 
-        self.agents = [Agent(i, random.randint(0, self.board_width), random.randint(0, self.board_height)) for i in
+        self.agents = [Agent(i, random.randint(0, self.board_width - 10), random.randint(0, self.board_height - 10)) for i in
                        range(config.num_agents)]
 
         self.central_locations = [CentralLocation(self.board_width // 2 - config.central_location_size // 2,
@@ -29,7 +29,7 @@ class Simulation:
                                                   config.central_location_size)
                                   for _ in range(config.num_central_locations)]
 
-        for i in range(10):
+        for i in range(config.initial_infected):
             self.agents[i].update_state("I")
         self.model = Model(config)
 
@@ -133,7 +133,7 @@ class Simulation:
 
         # Zapisanie klatek jako GIF
         if frames:
-            frames[0].save(gif_filename, save_all=True, append_images=frames[1:], optimize=True, duration=100, loop=0)
+            frames[0].save(gif_filename, save_all=True, append_images=frames[1:], optimize=True, duration=40, loop=0)
 
         # Rysowanie wykresów
         self.plot_state_history()
