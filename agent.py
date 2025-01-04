@@ -1,6 +1,9 @@
 import random
 import pygame
 import math
+import numpy as np
+
+from functions import age_immunity_loss_proba, age_infection_proba, age_mortality_proba, age_recovery_proba, gender_immunity_loss_proba, gender_infection_proba, gender_mortality_proba, gender_recovery_proba, mask_immunity_loss_proba, mask_infection_proba, mask_mortality_proba, mask_recovery_proba, vaccinated_immunity_loss_proba, vaccinated_infection_proba, vaccinated_mortality_proba, vaccinated_recovery_proba
 
 
 class Agent:
@@ -21,6 +24,36 @@ class Agent:
         self.quick_travel_frames = 15
         self.time_to_spend_in_central_location = 0
         self.quarantined = False
+        
+        self.age = self.assign_age()
+        self.gender = self.assign_gender()
+        self.vaccinated = self.assign_vaccination()
+        self.mask = self.assign_mask()
+
+    def assign_age(self, mean=40, std_dev=10):
+        return max(0, int(np.random.normal(mean, std_dev)))
+    
+    def assign_gender(self):
+        gender_value = np.random.uniform(-1, 1)
+        return 'Male' if gender_value < 0 else 'Female'
+    
+    def assign_vaccination(self):
+        return random.random() < 0
+    
+    def assign_mask(self):
+        return random.random() < 0
+    
+    def compute_infection_rate(self, config):
+        return max(0, min(config.infection_rate + age_infection_proba(self.age) + gender_infection_proba(self.gender) + vaccinated_infection_proba(self.vaccinated) + mask_infection_proba(self.mask), 1))
+    
+    def compute_recovery_rate(self, config):
+        return max(0, min(config.recovery_rate + age_recovery_proba(self.age) + gender_recovery_proba(self.gender) + vaccinated_recovery_proba(self.vaccinated) + mask_recovery_proba(self.mask), 1))
+    
+    def compute_mortality_rate(self, config):
+        return max(0, min(config.mortality_rate + age_mortality_proba(self.age) + gender_mortality_proba(self.gender) + vaccinated_mortality_proba(self.vaccinated) + mask_mortality_proba(self.mask), 1))
+    
+    def compute_immunity_loss_rate(self, config):
+        return max(0, min(config.immunity_loss_rate + age_immunity_loss_proba(self.age) + gender_immunity_loss_proba(self.gender) + vaccinated_immunity_loss_proba(self.vaccinated) + mask_immunity_loss_proba(self.mask), 1))
 
     def assign_random_direction(self):
         vector_length = 0
@@ -68,7 +101,7 @@ class Agent:
         """Stan zdrowy - agent może się zarazić."""
         for other_agent in agents:
             if other_agent.state == "I" and self.distance_to(other_agent) < config.infection_radius:
-                if random.random() < config.infection_rate:
+                if random.random() < self.compute_infection_rate(config):
                     self.update_state("E")  # Zarażenie, przejście do stanu "E"
                     break
 
@@ -79,13 +112,13 @@ class Agent:
 
     def state_I(self, config):
         """Stan zakażony - agent może wyzdrowieć lub umrzeć."""
-        if random.random() < config.recovery_rate and self.time_in_state >= config.recovery_period:
+        if random.random() < self.compute_recovery_rate(config) and self.time_in_state >= config.recovery_period:
             self.update_state("R")  # Przechodzi do stanu wyzdrowienia
-        elif random.random() < config.mortality_rate and self.time_in_state >= config.mortality_period:
+        elif random.random() < self.compute_mortality_rate(config) and self.time_in_state >= config.mortality_period:
             self.update_state("D")  # Umiera
 
     def state_R(self, config):
-        if random.random() < config.immunity_loss_rate and self.time_in_state >= config.immunity_loss_period:
+        if random.random() < self.compute_immunity_loss_rate(config) and self.time_in_state >= config.immunity_loss_period:
             self.update_state("S")
 
     def distance_to(self, other_agent):
