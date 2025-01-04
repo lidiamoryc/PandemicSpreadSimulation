@@ -34,8 +34,7 @@ class Simulation:
         self.model = Model(config)
 
         self.state_history = []  # Lista do przechowywania historii stanów
-        self.age_distribution = self.get_age_dist()
-        self.gender_distribution = self.get_gender_dist()
+        self.dists = self.get_dists()
         self.rates = self.get_rates(config)
 
     def get_rates(self, config):
@@ -73,27 +72,39 @@ class Simulation:
                 rates["immunity_loss"][immunity_loss_rate] = 1
         
         return rates
-        
-    def get_age_dist(self):
-        """Zwraca rozkład wieku agentów."""
-        age_dist = {}
-        for agent in self.agents:
-            if agent.age in age_dist:
-                age_dist[agent.age] += 1
-            else:
-                age_dist[agent.age] = 1
-        return age_dist
     
-    def get_gender_dist(self):
-        """Zwraca rozkład płci agent."""
-        gender_dist = {}
+    def get_dists(self):
+        dists = {
+            'age': {},
+            'gender': {},
+            'vaccinated': {},
+            'mask': {}
+        }
+
         for agent in self.agents:
-            if agent.gender in gender_dist:
-                gender_dist[agent.gender] += 1
-            else:
-                gender_dist[agent.gender] = 1
-        return gender_dist
             
+            if agent.age in dists['age']:
+                dists['age'][agent.age] += 1
+            else:
+                dists['age'][agent.age] = 1
+
+            if agent.gender in dists['gender']:
+                dists['gender'][agent.gender] += 1
+            else:
+                dists['gender'][agent.gender] = 1
+
+            if agent.vaccinated in dists['vaccinated']:
+                dists['vaccinated'][agent.vaccinated] += 1
+            else:
+                dists['vaccinated'][agent.vaccinated] = 1
+
+            if agent.mask in dists['mask']:
+                dists['mask'][agent.mask] += 1
+            else:
+                dists['mask'][agent.mask] = 1
+
+        return dists
+                    
     def run(self, steps, screen, clock, gif_filename):
         """Uruchomienie symulacji przez określoną liczbę kroków i zapisanie do pliku GIF."""
         frames = []  # Lista do przechowywania klatek
@@ -162,97 +173,103 @@ class Simulation:
         self.state_history.append(state_counts)
 
     def plot_dists(self):
-        fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+        fig, ax = plt.subplots(2, 2, figsize=(10, 5))
 
-        ax[0].bar(self.age_distribution.keys(), self.age_distribution.values(), color="skyblue")
-        ax[0].set_title("Age Distribution")
-        ax[0].set_xlabel("Age")
-        ax[0].set_ylabel("Number of Agents")
-        ax[0].grid(True)
+        ax[0, 0].bar(self.dists['age'].keys(), self.dists['age'].values(), color="skyblue")
+        ax[0, 0].set_title("Age Distribution")
+        ax[0, 0].set_xlabel("Age")
+        ax[0, 0].set_ylabel("Count")
+        ax[0, 0].grid(True)
 
-        ax[1].pie(self.gender_distribution.values(), labels=self.gender_distribution.keys(), autopct='%d%%', startangle=90, colors=["blue", "pink"])
-        ax[1].set_title("Gender Distribution")
+        ax[0, 1].pie(self.dists['gender'].values(), labels=self.dists['gender'].keys(), autopct='%d%%', startangle=90, colors=["blue", "pink"])
+        ax[0, 1].set_title("Gender Distribution")
+
+        ax[1, 0].pie(self.dists['vaccinated'].values(), labels=self.dists['vaccinated'].keys(), autopct='%d%%', startangle=90, colors=["blue", "pink"])
+        ax[1, 0].set_title("Vaccination Distribution")
+
+        ax[1, 1].pie(self.dists['mask'].values(), labels=self.dists['mask'].keys(), autopct='%d%%', startangle=90, colors=["blue", "pink"])
+        ax[1, 1].set_title("Mask Wearing Distribution")
 
         plt.tight_layout()
 
     def plot_functions(self):
-        fig, ax = plt.subplots(2, 4, figsize=(15, 8))
-        fig, ax2 = plt.subplots(2, 4, figsize=(15, 8))
+        fig, ax = plt.subplots(2, 4, figsize=(10, 5))
+        fig, ax2 = plt.subplots(2, 4, figsize=(10, 5))
 
         ages = np.linspace(0, 100)
         genders = ['Male', 'Female']
-        vaccinated = [True, False]
-        masks = [True, False]
+        vaccinated = ['True', 'False']
+        masks = ['True', 'False']
         
         infection_vals = [age_infection_proba(age) for age in ages]
-        ax[0, 0].plot(ages, infection_vals, label="Additional infection probability based on age")
+        ax[0, 0].plot(ages, infection_vals, label="InfectionProbability(age)")
         ax[0, 0].set_xlabel("Age")
         ax[0, 0].set_ylabel("Rate")
         ax[0, 0].legend()
         ax[0, 0].grid(True)
 
 
-        ax[0, 1].bar(genders, [gender_infection_proba(gender) for gender in genders], color='orange')
-        ax[0, 1].set_title("Additional infection probability based on gender")
+        ax[0, 1].bar(genders, [gender_infection_proba(gender) for gender in genders], color='darkgreen')
+        ax[0, 1].set_title("InfectionProbability(gender)")
 
         ax[0, 2].bar(vaccinated, [vaccinated_infection_proba(vacc) for vacc in vaccinated], color='gray')
-        ax[0, 2].set_title("Additional infection probability based on being vaccinated")
+        ax[0, 2].set_title("InfectionProbability(vaccinated)")
 
-        ax[0, 3].bar(masks, [mask_infection_proba(mask) for mask in masks], color='darkgreen')
-        ax[0, 3].set_title("Additional infection probability based on wearing mask")
+        ax[0, 3].bar(masks, [mask_infection_proba(mask) for mask in masks], color='red')
+        ax[0, 3].set_title("InfectionProbability(wearing_mask)")
 
         recovery_vals = [age_recovery_proba(age) for age in ages]
-        ax[1, 0].plot(ages, recovery_vals, label="Additional recovery probability based on age")
+        ax[1, 0].plot(ages, recovery_vals, label="RecoveryProbability(age)")
         ax[1, 0].set_xlabel("Age")
         ax[1, 0].set_ylabel("Rate")
         ax[1, 0].legend()
         ax[1, 0].grid(True)
 
-        ax[1, 1].bar(genders, [gender_recovery_proba(gender) for gender in genders], color='orange')
-        ax[1, 1].set_title("Additional recovery probability based on gender")
+        ax[1, 1].bar(genders, [gender_recovery_proba(gender) for gender in genders], color='darkgreen')
+        ax[1, 1].set_title("RecoveryProbability(gender)")
 
         ax[1, 2].bar(vaccinated, [vaccinated_recovery_proba(vacc) for vacc in vaccinated], color='gray')
-        ax[1, 2].set_title("Additional recovery probability based on being vaccinated")
+        ax[1, 2].set_title("RecoveryProbability(vaccinated)")
 
-        ax[1, 3].bar(masks, [mask_recovery_proba(mask) for mask in masks], color='darkgreen')
-        ax[1, 3].set_title("Additional recovery probability based on wearing mask")
+        ax[1, 3].bar(masks, [mask_recovery_proba(mask) for mask in masks], color='red')
+        ax[1, 3].set_title("RecoveryProbability(wearing_mask)")
 
         mortality_vals = [age_mortality_proba(age) for age in ages]
-        ax2[0, 0].plot(ages, mortality_vals, label="Additional mortality probability based on age")
+        ax2[0, 0].plot(ages, mortality_vals, label="MortalityProbability(age)")
         ax2[0, 0].set_xlabel("Age")
         ax2[0, 0].set_ylabel("Rate")
         ax2[0, 0].legend()
         ax2[0, 0].grid(True)
 
-        ax2[0, 1].bar(genders, [gender_mortality_proba(gender) for gender in genders], color='orange')
-        ax2[0, 1].set_title("Additional mortality probability based on gender")
+        ax2[0, 1].bar(genders, [gender_mortality_proba(gender) for gender in genders], color='darkgreen')
+        ax2[0, 1].set_title("MortalityProbability(gender)")
 
         ax2[0, 2].bar(vaccinated, [vaccinated_mortality_proba(vacc) for vacc in vaccinated], color='gray')
-        ax2[0, 2].set_title("Additional mortality probability based on being vaccinated")
+        ax2[0, 2].set_title("MortalityProbability(vaccinated)")
 
-        ax2[0, 3].bar(masks, [mask_mortality_proba(mask) for mask in masks], color='darkgreen')
-        ax2[0, 3].set_title("Additional mortality probability based on wearing mask")
+        ax2[0, 3].bar(masks, [mask_mortality_proba(mask) for mask in masks], color='red')
+        ax2[0, 3].set_title("MortalityProbability(wearing_mask)")
 
         immunity_loss_vals = [age_immunity_loss_proba(age) for age in ages]
-        ax2[1, 0].plot(ages, immunity_loss_vals, label="Additional immunity loss probability based on age")
+        ax2[1, 0].plot(ages, immunity_loss_vals, label="ImmunityLossProbability(age)")
         ax2[1, 0].set_xlabel("Age")
         ax2[1, 0].set_ylabel("Rate")
         ax2[1, 0].legend()
         ax2[1, 0].grid(True)
 
-        ax2[1, 1].bar(genders, [gender_immunity_loss_proba(gender) for gender in genders], color='orange')
-        ax2[1, 1].set_title("Additional immunity loss probability based on gender")
+        ax2[1, 1].bar(genders, [gender_immunity_loss_proba(gender) for gender in genders], color='darkgreen')
+        ax2[1, 1].set_title("ImmunityLossProbability(gender)")
 
         ax2[1, 2].bar(vaccinated, [vaccinated_immunity_loss_proba(vacc) for vacc in vaccinated], color='gray')
-        ax2[1, 2].set_title("Additional immunity loss probability based on being vaccinated")
+        ax2[1, 2].set_title("ImmunityLossProbability(vaccinated)")
 
-        ax2[1, 3].bar(masks, [mask_immunity_loss_proba(mask) for mask in masks], color='darkgreen')
-        ax2[1, 3].set_title("Additional immunity loss probability based on wearing mask")
+        ax2[1, 3].bar(masks, [mask_immunity_loss_proba(mask) for mask in masks], color='red')
+        ax2[1, 3].set_title("ImmunityLossProbability(wearing_mask)")
 
     def plot_rates(self):
         fig, ax = plt.subplots(1, 4, figsize=(15, 10))
 
-        ax[0].bar(self.rates["infection"].keys(), self.rates["infection"].values(), color="skyblue")
+        ax[0].bar(self.rates["infection"].keys(), self.rates["infection"].values(), color="red")
         ax[0].set_title("Infection Rates Distribution")
         ax[0].set_xlabel("Infection Rate (%)")
         ax[0].set_ylabel("Rate")
@@ -270,7 +287,7 @@ class Simulation:
         ax[2].set_ylabel("Rate")
         ax[2].grid(True)
 
-        ax[3].bar(self.rates["immunity_loss"].keys(), self.rates["immunity_loss"].values(), color="gray")
+        ax[3].bar(self.rates["immunity_loss"].keys(), self.rates["immunity_loss"].values(), color="blue")
         ax[3].set_title("Immunity Loss Rates Distribution")
         ax[3].set_xlabel("Immunity Loss Rate (%)")
         ax[3].set_ylabel("Rate")

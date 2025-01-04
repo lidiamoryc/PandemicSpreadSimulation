@@ -8,10 +8,10 @@ def gender_infection_proba(gender):
     return 0.0 if gender == 'Male' else 0.01
 
 def vaccinated_infection_proba(vaccinated):
-    return -0.2 if vaccinated else 0
+    return -0.2 if vaccinated == 'True' else 0
 
 def mask_infection_proba(mask):
-    return -0.1 if mask else 0
+    return -0.1 if mask == 'True' else 0
 
 def age_recovery_proba(age):
     interim_val = 0.02 * age - 3
@@ -33,7 +33,7 @@ def gender_mortality_proba(gender):
     return 0.002 if gender == 'Male' else 0.001
 
 def vaccinated_mortality_proba(vaccinated):
-    return -0.03 if vaccinated else 0
+    return -0.03 if vaccinated == 'True' else 0
 
 def mask_mortality_proba(mask):
     return 0
@@ -45,7 +45,7 @@ def gender_immunity_loss_proba(gender):
     return 0.01 if gender == 'Male' else 0.01
 
 def vaccinated_immunity_loss_proba(vaccinated):
-    return -0.15 if vaccinated else 0
+    return -0.15 if vaccinated == 'True' else 0
 
 def mask_immunity_loss_proba(mask):
     return 0

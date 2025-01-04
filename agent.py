@@ -38,10 +38,12 @@ class Agent:
         return 'Male' if gender_value < 0 else 'Female'
     
     def assign_vaccination(self):
-        return random.random() < 0
+        vaccinated_value = np.random.uniform(-1, 1)
+        return 'True' if vaccinated_value < 0 else 'False'
     
     def assign_mask(self):
-        return random.random() < 0
+        mask_value = np.random.uniform(-1, 1)
+        return 'True' if mask_value < 0 else 'False'
     
     def compute_infection_rate(self, config):
         return max(0, min(config.infection_rate + age_infection_proba(self.age) + gender_infection_proba(self.gender) + vaccinated_infection_proba(self.vaccinated) + mask_infection_proba(self.mask), 1))
