@@ -51,10 +51,10 @@ class Agent:
         """Zwiększenie czasu spędzonego w danym stanie."""
         self.time_in_state += 1
 
-    def transition(self, agents, config):
+    def transition(self, config, board_grid):
         """Aktualizowanie stanu agenta na podstawie jego obecnego stanu i interakcji."""
         if self.state == "S":
-            self.state_S(agents, config)
+            self.state_S(self.find_agents_in_neighbouring_grid_cells(board_grid, config), config)
         elif self.state == "E":
             self.state_E(config)
         elif self.state == "I":
@@ -91,6 +91,50 @@ class Agent:
     def distance_to(self, other_agent):
         """Obliczenie odległości między dwoma agentami."""
         return math.sqrt((self.x - other_agent.x) ** 2 + (self.y - other_agent.y) ** 2)
+
+    def find_agents_in_neighbouring_grid_cells(self, board_grid, config):
+        agents = []
+        board_width = len(board_grid)
+        board_height = len(board_grid[0])
+        for x in [-1, 0, 1]:
+            for y in [-1, 0, 1]:
+                i = int((self.x // config.social_distancing_repulsion_radius) + x)
+                j = int((self.y // config.social_distancing_repulsion_radius) + y)
+                if 0 <= i < board_width and 0 <= j < board_height:
+                    agents.extend(board_grid[i][j])
+        return agents
+
+    def calculate_repulsion(self, config, board_grid):
+        if self.quick_travelling:
+            return
+        repulsion_x, repulsion_y = 0, 0
+        for agent in self.find_agents_in_neighbouring_grid_cells(board_grid, config):
+            if agent == self or agent.state == 'D':
+                continue
+
+            distance = self.distance_to(agent)
+            if distance > config.social_distancing_repulsion_radius:
+                continue
+            if distance == 0:
+                distance = 1e-10
+
+            repulsion_x += (-(agent.x - self.x) / distance ** 2) * config.social_distancing_repulsion_force
+            repulsion_y += (-(agent.y - self.y) / distance ** 2) * config.social_distancing_repulsion_force
+
+        self.direction_x += repulsion_x
+        self.direction_y += repulsion_y
+
+        vector_length = (self.direction_x ** 2 + self.direction_y ** 2) ** 0.5
+        if vector_length == 0:
+            return
+
+        self.direction_x /= vector_length
+        self.direction_x *= self.speed
+
+        self.direction_y /= vector_length
+        self.direction_y *= self.speed
+
+
 
     def move(self, width, height):
         """Poruszanie agenta po planszy (odbicie od krawędzi)."""
@@ -206,12 +250,14 @@ class Agent:
         elif self.state == "D":
             return (0, 0, 0)
 
-    def step(self, agents, config, screen, central_locations, quarantine, width, height):
+    def step(self, config, screen, central_locations, quarantine, width, height, board_grid):
         """Aktualizacja agenta: poruszanie się, rysowanie i przejście stanu."""
         self.visit_central_location(config, central_locations, width, height)
         self.visit_quarantine(config, quarantine, width, height)
         self.change_direction(config)
+        if config.social_distancing_repulsion_force > 0:
+            self.calculate_repulsion(config, board_grid)
         self.move(width, height)  # Poruszanie
-        self.transition(agents, config)  # Aktualizacja stanu
+        self.transition(config, board_grid)  # Aktualizacja stanu
         self.draw(screen, config)  # Rysowanie agenta
         self.increment_time_in_state()  # Zwiększanie licznika czasu w danym stanie

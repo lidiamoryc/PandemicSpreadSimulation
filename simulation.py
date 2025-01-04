@@ -23,6 +23,7 @@ class Simulation:
 
         self.agents = [Agent(i, random.randint(0, self.board_width - 10), random.randint(0, self.board_height - 10)) for i in
                        range(config.num_agents)]
+        self.board_grid = []
 
         self.central_locations = [CentralLocation(self.board_width // 2 - config.central_location_size // 2,
                                                   self.board_height // 2 - config.central_location_size // 2,
@@ -83,9 +84,28 @@ class Simulation:
 
     def step(self, screen):
         """Przeprowadzenie jednego kroku symulacji."""
+        self.board_grid = self.build_board_grid()
         for agent in self.agents:
-            agent.step(self.agents, self.config, screen, self.central_locations, self.quarantine,
-                       self.board_width, self.board_height)  # Wykonanie kroku dla każdego agenta
+            agent.step(self.config, screen, self.central_locations, self.quarantine,
+                       self.board_width, self.board_height, self.board_grid)  # Wykonanie kroku dla każdego agenta
+
+    def build_board_grid(self):
+        grid_width = math.ceil(self.board_height / self.config.social_distancing_repulsion_radius)
+        grid_height = math.ceil(self.board_width / self.config.social_distancing_repulsion_radius)
+        result = [
+            [
+                [] for _ in range(grid_width)
+            ] for _ in range(grid_height)
+        ]
+        for agent in self.agents:
+            i = int(agent.x // self.config.social_distancing_repulsion_radius)
+            j = int(agent.y // self.config.social_distancing_repulsion_radius)
+
+            # fallback for the agents that exit the board
+            i = i if i < grid_width else grid_width - 1
+            j = j if j < grid_width else grid_width - 1
+            result[i][j].append(agent)
+        return result
 
     def record_state(self):
         """Zapisuje liczbę agentów w każdym stanie w danym momencie."""
