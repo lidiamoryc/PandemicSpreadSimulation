@@ -11,4 +11,4 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((config.width, config.height))
     clock = pygame.time.Clock()
 
-    simulation.run(600, screen, clock, "vis1.gif")  # Uruchamiamy symulację przez 100 kroków
+    simulation.run(500, screen, clock, "vis1.gif")  # Uruchamiamy symulację przez 100 kroków
