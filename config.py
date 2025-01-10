@@ -23,5 +23,14 @@ class Config:
         self.quarantine = True
         self.quarantine_visit_proba = 0.04
 
-        self.social_distancing_repulsion_force = 30
+        self.social_distancing_repulsion_force = 0
         self.social_distancing_repulsion_radius = self.infection_radius + 10
+
+        self.mask_wearing_proba = 0.7
+        self.vaccinated_proba = 0.5
+
+    def params_values_text(self):
+        result = ''
+        for variable_name, variable_value in vars(self).items():
+            result += f'{variable_name}: {variable_value}\n'
+        return result

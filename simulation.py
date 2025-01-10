@@ -8,6 +8,7 @@ from agent import Agent
 from functions import age_immunity_loss_proba, age_infection_proba, age_mortality_proba, age_recovery_proba, gender_immunity_loss_proba, gender_infection_proba, gender_mortality_proba, gender_recovery_proba, mask_immunity_loss_proba, mask_infection_proba, mask_mortality_proba, mask_recovery_proba, vaccinated_immunity_loss_proba, vaccinated_infection_proba, vaccinated_mortality_proba, vaccinated_recovery_proba
 from model import Model
 from central_location import CentralLocation
+import math
 
 
 class Simulation:
@@ -21,7 +22,7 @@ class Simulation:
             else (config.width - self.quarantine.size - config.infection_radius * 2,
                   config.height - self.quarantine.size - config.infection_radius * 2)
 
-        self.agents = [Agent(i, random.randint(0, self.board_width - 10), random.randint(0, self.board_height - 10)) for i in
+        self.agents = [Agent(i, random.randint(0, self.board_width - 10), random.randint(0, self.board_height - 10), config) for i in
                        range(config.num_agents)]
         self.board_grid = []
 
@@ -323,7 +324,7 @@ class Simulation:
         dead = [state["D"] for state in self.state_history]
 
         # Tworzymy wykres
-        plt.figure(figsize=(10, 6))
+        f, ax = plt.subplots(1, 1, figsize=(15, 6))
         plt.plot(time_steps, susceptible, label="S - Susceptible", color="blue")
         plt.plot(time_steps, exposed, label="E - Exposed", color="yellow")
         plt.plot(time_steps, infected, label="I - Infected", color="red")
@@ -331,11 +332,16 @@ class Simulation:
         plt.plot(time_steps, dead, label="D - Dead", color="black")
 
         # Dodajemy parametry config do tytułu wykresu
-        title = f"Agent States Over Time\n"
-        title += f"Num Agents: {self.config.num_agents}, Minimum Recovery Period: {self.config.recovery_period}, \n Minimum Mortality Period: {self.config.mortality_period}, \n Minimum Immunity Loss Period: {self.config.immunity_loss_period}, Infection Radius: {self.config.infection_radius}"
+        title = f"Agent States Over Time"
         plt.title(title)
 
         plt.xlabel("Time Step")
         plt.ylabel("Number of Agents")
         plt.legend()
         plt.grid(True)
+
+        text = 'Configuration parameters:\n' + self.config.params_values_text()
+        box = dict(boxstyle='round', facecolor='grey', alpha=0.15)
+        ax.text(1.03, 0.98, text, transform=ax.transAxes, fontsize=8, verticalalignment='top', bbox=box)
+        plt.tight_layout()
+        plt.show()
