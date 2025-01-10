@@ -12,4 +12,4 @@ if __name__ == "__main__":
     clock = pygame.time.Clock()
 
 
-    simulation.run(500, screen, clock, "vis.gif")  # Uruchamiamy symulację przez 500 kroków
+    simulation.run(10, screen, clock, "vis.gif")  # Uruchamiamy symulację przez 500 kroków

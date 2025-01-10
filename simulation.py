@@ -8,6 +8,7 @@ from agent import Agent
 from functions import age_immunity_loss_proba, age_infection_proba, age_mortality_proba, age_recovery_proba, gender_immunity_loss_proba, gender_infection_proba, gender_mortality_proba, gender_recovery_proba, mask_immunity_loss_proba, mask_infection_proba, mask_mortality_proba, mask_recovery_proba, vaccinated_immunity_loss_proba, vaccinated_infection_proba, vaccinated_mortality_proba, vaccinated_recovery_proba
 from model import Model
 from central_location import CentralLocation
+import math
 
 
 class Simulation:
@@ -21,7 +22,7 @@ class Simulation:
             else (config.width - self.quarantine.size - config.infection_radius * 2,
                   config.height - self.quarantine.size - config.infection_radius * 2)
 
-        self.agents = [Agent(i, random.randint(0, self.board_width - 10), random.randint(0, self.board_height - 10)) for i in
+        self.agents = [Agent(i, random.randint(0, self.board_width - 10), random.randint(0, self.board_height - 10), config) for i in
                        range(config.num_agents)]
         self.board_grid = []
 

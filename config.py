@@ -23,5 +23,8 @@ class Config:
         self.quarantine = True
         self.quarantine_visit_proba = 0.04
 
-        self.social_distancing_repulsion_force = 30
+        self.social_distancing_repulsion_force = 0
         self.social_distancing_repulsion_radius = self.infection_radius + 10
+
+        self.mask_wearing_proba = 0.7
+        self.vaccinated_proba = 0.5
