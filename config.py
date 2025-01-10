@@ -28,3 +28,9 @@ class Config:
 
         self.mask_wearing_proba = 0.7
         self.vaccinated_proba = 0.5
+
+    def params_values_text(self):
+        result = ''
+        for variable_name, variable_value in vars(self).items():
+            result += f'{variable_name}: {variable_value}\n'
+        return result

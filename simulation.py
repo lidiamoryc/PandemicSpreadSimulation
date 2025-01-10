@@ -324,7 +324,7 @@ class Simulation:
         dead = [state["D"] for state in self.state_history]
 
         # Tworzymy wykres
-        plt.figure(figsize=(10, 6))
+        f, ax = plt.subplots(1, 1, figsize=(15, 6))
         plt.plot(time_steps, susceptible, label="S - Susceptible", color="blue")
         plt.plot(time_steps, exposed, label="E - Exposed", color="yellow")
         plt.plot(time_steps, infected, label="I - Infected", color="red")
@@ -332,11 +332,16 @@ class Simulation:
         plt.plot(time_steps, dead, label="D - Dead", color="black")
 
         # Dodajemy parametry config do tytułu wykresu
-        title = f"Agent States Over Time\n"
-        title += f"Num Agents: {self.config.num_agents}, Minimum Recovery Period: {self.config.recovery_period}, \n Minimum Mortality Period: {self.config.mortality_period}, \n Minimum Immunity Loss Period: {self.config.immunity_loss_period}, Infection Radius: {self.config.infection_radius}"
+        title = f"Agent States Over Time"
         plt.title(title)
 
         plt.xlabel("Time Step")
         plt.ylabel("Number of Agents")
         plt.legend()
         plt.grid(True)
+
+        text = 'Configuration parameters:\n' + self.config.params_values_text()
+        box = dict(boxstyle='round', facecolor='grey', alpha=0.15)
+        ax.text(1.03, 0.98, text, transform=ax.transAxes, fontsize=8, verticalalignment='top', bbox=box)
+        plt.tight_layout()
+        plt.show()
