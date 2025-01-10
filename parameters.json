@@ -1,6 +1,7 @@
 {
-    "number_of_agents": 100,
-    "infection_rate": 0.2,
-    "initial_infected": 10,
-    "recovery_period": 10
+    "number_of_agents": 1000,
+    "infection_rate": 0.4,
+    "initial_infected": 140,
+    "recovery_period": 30,
+    "quarantine_visit_proba": 0.12
 }

@@ -166,7 +166,7 @@ class Simulation:
             frames.append(image)
 
             # NOTE: odkomentować, jeśli potrzeba wyświelić symulację w oknie pygame
-            # pygame.display.flip()  # Aktualizacja ekranu
+            pygame.display.flip()  # Aktualizacja ekranu
             clock.tick(24)  # Ustalamy ilość klatek na sekundę
             steps -= 1
 

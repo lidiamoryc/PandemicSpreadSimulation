@@ -16,6 +16,7 @@ class Config:
         self.infection_rate = params.get('infection_rate', 0.03)  # Prawdopodobieństwo zarażenia zdrowego agenta
         self.initial_infected = params.get('initial_infected', 20)  # Liczba początkowo zakażonych agentów
         self.recovery_period = params.get('recovery_period', 30)
+        self.quarantine_visit_proba = params.get('quarantine_visit_proba', 0.12)
 
         self.incubation_period = 15  # Prawdopodobieństwo przejścia z narażenia do zakażenia
         self.recovery_rate = 0.3 # Prawdopodobieństwo wyzdrowienia
@@ -34,7 +35,6 @@ class Config:
         self.frames_spent_in_central_location = 50
 
         self.quarantine = True
-        self.quarantine_visit_proba = 0.04
 
         self.social_distancing_repulsion_force = 0
         self.social_distancing_repulsion_radius = self.infection_radius + 10

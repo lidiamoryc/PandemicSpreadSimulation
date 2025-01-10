@@ -2,13 +2,14 @@ import streamlit as st
 import json
 import subprocess
 
-def save_parameters(number_of_agents, infection_rate, initial_infected, recovery_period):
+def save_parameters(number_of_agents, infection_rate, initial_infected, recovery_period, quarantine_visit_proba):
     """Zapisuje parametry do pliku JSON."""
     parameters = {
         "number_of_agents": number_of_agents,
         "infection_rate": infection_rate,
         "initial_infected": initial_infected,
         "recovery_period": recovery_period,
+        "quarantine_visit_proba": quarantine_visit_proba
     }
 
     with open("parameters.json", "w") as file:
@@ -57,6 +58,14 @@ def main_page():
         )
         initial_infected_value = st.number_input("Liczba początkowo zakażonych agentów", min_value=0, step=1, key="initial_infected_input")
         recovery_period_value = st.number_input("Czas potrzebny na wyzdrowienie", min_value=0, step=1, key="recovery_period_input")
+        quarantine_visit_proba_value = st.number_input(
+            "Prawdopodobieństwo poddania się kwarantannie",
+            min_value=0.0,
+            max_value=1.0,
+            step=0.01,
+            format="%.2f",
+            key="quarantine_visit_proba_input"
+        )
 
     def run_simulation(script_path):
         try:
@@ -76,5 +85,5 @@ def main_page():
             st.error("Nie znaleziono pliku symulacji. Sprawdź ścieżkę.")
 
     if st.button("Rozpocznij", key="start_button"):
-        save_parameters(number_of_agents_value, infection_rate_value, initial_infected_value, recovery_period_value)
+        save_parameters(number_of_agents_value, infection_rate_value, initial_infected_value, recovery_period_value, quarantine_visit_proba_value)
         st.session_state["page"] = "next"
