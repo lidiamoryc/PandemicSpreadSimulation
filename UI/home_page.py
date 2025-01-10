@@ -29,14 +29,13 @@ def main_page():
 
     st.title("Symulacje Systemów Dyskretnych \n NA PODSTAWIE SYMULACJI ROZPRZESTRZENIANIA SIĘ PANDEMII")
 
-    st.write(""" Symulacja będzie oparta na rozszerzonym modelu SIR:
-        **S (Susceptible)**: Osoby podatne na zakażenie,
-        **I (Infectious)**: Osoby zakażone, zdolne do przenoszenia choroby,
-        **R (Recovered)**: Osoby wyleczone z trwałą odpornością lub odpornością czasową,
-        **D (Deceased)**: Osoby, które zmarły w wyniku choroby oraz,
-        **V (Vaccinated)**: Osoby zaszczepione, z różnym poziomem ochrony (pełna odporność, częściowa, brak odporności).
-        """
-    )
+    st.write(""" Symulacja będzie oparta na rozszerzonym modelu SEIRD:
+            **S (Susceptible)**: Osoby podatne na zakażenie,
+            **E (Exposed)**: Osoby narażone na kontakt z patogenem, będące w okresie inkubacji,
+            **I (Infectious)**: Osoby zakażone, zdolne do przenoszenia choroby,
+            **R (Recovered)**: Osoby wyleczone z trwałą odpornością lub odpornością czasową,
+            **D (Deceased)**: Osoby, które zmarły w wyniku choroby.
+            """)
 
     st.write("")
 
