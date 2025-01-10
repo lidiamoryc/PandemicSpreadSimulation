@@ -1,0 +1,6 @@
+pygame
+numpy
+pillow
+matplotlib
+streamlit
+imageio

@@ -8,7 +8,7 @@ from agent import Agent
 from functions import age_immunity_loss_proba, age_infection_proba, age_mortality_proba, age_recovery_proba, gender_immunity_loss_proba, gender_infection_proba, gender_mortality_proba, gender_recovery_proba, mask_immunity_loss_proba, mask_infection_proba, mask_mortality_proba, mask_recovery_proba, vaccinated_immunity_loss_proba, vaccinated_infection_proba, vaccinated_mortality_proba, vaccinated_recovery_proba
 from model import Model
 from central_location import CentralLocation
-
+import math
 
 class Simulation:
     def __init__(self, config):
@@ -105,7 +105,29 @@ class Simulation:
                 dists['mask'][agent.mask] = 1
 
         return dists
-                    
+
+
+    def save_plots(self):
+        # Save the state history plot
+        self.plot_state_history()
+        plt.savefig("plot/state_history_plot.png", dpi=300)  # Save with high resolution
+        plt.close()  # Close the plot to avoid overlapping with other plots
+
+        # Save the distributions plot
+        self.plot_dists()
+        plt.savefig("plot/distributions_plot.png", dpi=300)
+        plt.close()
+
+        # # Save the functions plot
+        # self.plot_functions()
+        # plt.savefig("functions_plot.png", dpi=300)
+        # plt.close()
+
+        # Save the rates plot
+        self.plot_rates()
+        plt.savefig("plot/rates_plot.png", dpi=300)
+        plt.close()
+
     def run(self, steps, screen, clock, gif_filename):
         """Uruchomienie symulacji przez określoną liczbę kroków i zapisanie do pliku GIF."""
         frames = []  # Lista do przechowywania klatek
@@ -139,6 +161,7 @@ class Simulation:
             image = Image.frombytes('RGB', (self.config.width, self.config.height), frame)
             frames.append(image)
 
+            # NOTE: odkomentować, jeśli potrzeba wyświelić symulację w oknie pygame
             pygame.display.flip()  # Aktualizacja ekranu
             clock.tick(24)  # Ustalamy ilość klatek na sekundę
             steps -= 1
@@ -147,14 +170,16 @@ class Simulation:
         if frames:
             frames[0].save(gif_filename, save_all=True, append_images=frames[1:], optimize=True, duration=40, loop=0)
 
-        # Rysowanie wykresów
-        self.plot_state_history()
-        self.plot_dists()
-        self.plot_functions()
-        self.plot_rates()
+        # # Rysowanie wykresów
+        # self.plot_state_history()
+        # self.plot_dists()
+        # self.plot_functions()
+        # self.plot_rates()
+        #
+        # plt.show()
 
-        plt.show()
-        
+        self.save_plots()
+
         pygame.quit()
 
     def step(self, screen):

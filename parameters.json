@@ -1,0 +1,6 @@
+{
+    "number_of_agents": 100,
+    "infection_rate": 0.2,
+    "initial_infected": 10,
+    "recovery_period": 10
+}

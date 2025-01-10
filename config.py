@@ -1,16 +1,29 @@
+import json
+import os
+import random
+
 class Config:
+
     def __init__(self):
-        self.num_agents = 1000  # Liczba agentów w populacji
-        self.infection_rate = 0.03  # Prawdopodobieństwo zarażenia zdrowego agenta
+        
+        # base_dir = os.path.dirname(os.path.abspath(__file__))
+        # file_path = os.path.join(base_dir, 'UI', 'parameters.json')
+
+        with open('parameters.json', 'r') as file:
+            params = json.load(file)
+
+        self.num_agents = params.get('number_of_agents', 1000) # Liczba agentów w populacji
+        self.infection_rate = params.get('infection_rate', 0.03)  # Prawdopodobieństwo zarażenia zdrowego agenta
+        self.initial_infected = params.get('initial_infected', 20)  # Liczba początkowo zakażonych agentów
+        self.recovery_period = params.get('recovery_period', 30)
+
         self.incubation_period = 15  # Prawdopodobieństwo przejścia z narażenia do zakażenia
         self.recovery_rate = 0.3 # Prawdopodobieństwo wyzdrowienia
-        self.recovery_period = 30
         self.mortality_rate = 0.007  # Prawdopodobieństwo śmierci
         self.mortality_period = 50
         self.width = 800  # Szerokość planszy
         self.height = 800 # Wysokość planszy
         self.infection_radius = 25  # Promień zakażenia, w którym agent może zarazić innych
-        self.initial_infected = 20  # Liczba początkowo zakażonych agentów
         self.immunity_loss_rate = 0.02
         self.immunity_loss_period = 30
         self.change_direction_proba = 0.1
