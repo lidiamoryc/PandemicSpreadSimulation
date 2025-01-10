@@ -36,22 +36,24 @@ Celem projektu jest stworzenie narzędzia umożliwiającego symulację rozprzest
    Aby uruchomić symulację, należy:
    ```bash
    python main.py
-   ```
-
-2. **Frontend**:
-   TODO
+   
+2. **Frontend: Aby uruchomić interfejs użytkownika w Streamlit, użyj polecenia:**
+   ```bash
+   streamlit run UI/main.py
 
 ## Wymagania systemowe
 
-- Python 3.8+
-- Biblioteki:
-  - pygame
-  - streamlit
-  - numpy
-  - pandas
+Python 3.8+
+Biblioteki:
+-pygame
+-streamlit
+-numpy
+-pandas
 
-Aby zainstalować wymagane biblioteki, użyj polecenia:
+Aby zainstalować wymagane biblioteki, należy użyć polecenia:
+```bash
+Skopiuj kod
+
+
 ```bash
 pip install -r requirements.txt
-```
-
