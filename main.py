@@ -14,4 +14,4 @@ if __name__ == "__main__":
     # NOTE: odkomentować, jeśli potrzeba wyświelić symulację w oknie pygame
     screen = pygame.display.set_mode((config.width, config.height))
 
-    simulation.run(500, screen, clock, "vis.gif")  # Uruchamiamy symulację przez 500 kroków
+    simulation.run(10, screen, clock, "vis.gif")  # Uruchamiamy symulację przez 500 kroków

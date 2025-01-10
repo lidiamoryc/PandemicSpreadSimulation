@@ -7,7 +7,7 @@ from functions import age_immunity_loss_proba, age_infection_proba, age_mortalit
 
 
 class Agent:
-    def __init__(self, id, x, y, state="S"):
+    def __init__(self, id, x, y, config, state="S"):
         self.id = id  # Unikalny identyfikator agenta
         self.state = state  # Stan agenta: S, E, I, R, D
         self.x = x  # Pozycja X
@@ -24,6 +24,8 @@ class Agent:
         self.quick_travel_frames = 15
         self.time_to_spend_in_central_location = 0
         self.quarantined = False
+
+        self.config = config
         
         self.age = self.assign_age()
         self.gender = self.assign_gender()
@@ -39,11 +41,11 @@ class Agent:
     
     def assign_vaccination(self):
         vaccinated_value = np.random.random()
-        return 'True' if vaccinated_value < 0 else 'False'
+        return 'True' if vaccinated_value < self.config.vaccinated_proba else 'False'
     
     def assign_mask(self):
         mask_value =  np.random.random()
-        return 'True' if mask_value < 0 else 'False'
+        return 'True' if mask_value < self.config.mask_wearing_proba else 'False'
     
     def compute_infection_rate(self, config):
         return max(0, min(config.infection_rate + age_infection_proba(self.age) + gender_infection_proba(self.gender) + vaccinated_infection_proba(self.vaccinated) + mask_infection_proba(self.mask), 1))
@@ -102,6 +104,8 @@ class Agent:
     def state_S(self, agents, config):
         """Stan zdrowy - agent może się zarazić."""
         for other_agent in agents:
+            if other_agent.quick_travelling:
+                continue
             if other_agent.state == "I" and self.distance_to(other_agent) < config.infection_radius:
                 if random.random() < self.compute_infection_rate(config):
                     self.update_state("E")  # Zarażenie, przejście do stanu "E"

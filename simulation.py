@@ -5,10 +5,14 @@ import pygame
 import matplotlib.pyplot as plt
 
 from agent import Agent
-from functions import age_immunity_loss_proba, age_infection_proba, age_mortality_proba, age_recovery_proba, gender_immunity_loss_proba, gender_infection_proba, gender_mortality_proba, gender_recovery_proba, mask_immunity_loss_proba, mask_infection_proba, mask_mortality_proba, mask_recovery_proba, vaccinated_immunity_loss_proba, vaccinated_infection_proba, vaccinated_mortality_proba, vaccinated_recovery_proba
+from functions import age_immunity_loss_proba, age_infection_proba, age_mortality_proba, age_recovery_proba, \
+    gender_immunity_loss_proba, gender_infection_proba, gender_mortality_proba, gender_recovery_proba, \
+    mask_immunity_loss_proba, mask_infection_proba, mask_mortality_proba, mask_recovery_proba, \
+    vaccinated_immunity_loss_proba, vaccinated_infection_proba, vaccinated_mortality_proba, vaccinated_recovery_proba
 from model import Model
 from central_location import CentralLocation
 import math
+import os
 
 class Simulation:
     def __init__(self, config):
@@ -21,7 +25,7 @@ class Simulation:
             else (config.width - self.quarantine.size - config.infection_radius * 2,
                   config.height - self.quarantine.size - config.infection_radius * 2)
 
-        self.agents = [Agent(i, random.randint(0, self.board_width - 10), random.randint(0, self.board_height - 10)) for i in
+        self.agents = [Agent(i, random.randint(0, self.board_width - 10), random.randint(0, self.board_height - 10), config) for i in
                        range(config.num_agents)]
         self.board_grid = []
 
@@ -150,19 +154,19 @@ class Simulation:
                                  (0, 0, 0),
                                  pygame.Rect(0, 0, self.board_width, self.board_height), 2)
 
-
             self.step(screen)
 
             # Zapisanie stanu symulacji
             self.record_state()
 
-            # Zapisanie klatki
+            if not os.path.exists('figures'):
+                os.makedirs('figures')
             frame = pygame.image.tostring(screen, 'RGB')
             image = Image.frombytes('RGB', (self.config.width, self.config.height), frame)
             frames.append(image)
 
             # NOTE: odkomentować, jeśli potrzeba wyświelić symulację w oknie pygame
-            pygame.display.flip()  # Aktualizacja ekranu
+            # pygame.display.flip()  # Aktualizacja ekranu
             clock.tick(24)  # Ustalamy ilość klatek na sekundę
             steps -= 1
 
@@ -226,33 +230,36 @@ class Simulation:
         ax[0, 0].set_ylabel("Count")
         ax[0, 0].grid(True)
 
-        ax[0, 1].pie(self.dists['gender'].values(), labels=self.dists['gender'].keys(), autopct='%d%%', startangle=90, colors=["blue", "pink"])
+        ax[0, 1].pie(self.dists['gender'].values(), labels=self.dists['gender'].keys(), autopct='%1.2f%%',
+                     startangle=90, colors=["blue", "pink"])
         ax[0, 1].set_title("Gender Distribution")
 
-        ax[1, 0].pie(self.dists['vaccinated'].values(), labels=self.dists['vaccinated'].keys(), autopct='%d%%', startangle=90, colors=["blue", "pink"])
+        ax[1, 0].pie(self.dists['vaccinated'].values(), labels=self.dists['vaccinated'].keys(), autopct='%1.2f%%',
+                     startangle=90, colors=["blue", "pink"])
         ax[1, 0].set_title("Vaccination Distribution")
 
-        ax[1, 1].pie(self.dists['mask'].values(), labels=self.dists['mask'].keys(), autopct='%d%%', startangle=90, colors=["blue", "pink"])
+        ax[1, 1].pie(self.dists['mask'].values(), labels=self.dists['mask'].keys(), autopct='%1.2f%%', startangle=90,
+                     colors=["blue", "pink"])
         ax[1, 1].set_title("Mask Wearing Distribution")
 
         plt.tight_layout()
+        fig.savefig('figures/distributions.png')
 
     def plot_functions(self):
-        fig, ax = plt.subplots(2, 4, figsize=(10, 5))
-        fig, ax2 = plt.subplots(2, 4, figsize=(10, 5))
+        fig1, ax = plt.subplots(2, 4, figsize=(10, 5))
+        fig2, ax2 = plt.subplots(2, 4, figsize=(10, 5))
 
         ages = np.linspace(0, 100)
         genders = ['Male', 'Female']
         vaccinated = ['True', 'False']
         masks = ['True', 'False']
-        
+
         infection_vals = [age_infection_proba(age) for age in ages]
         ax[0, 0].plot(ages, infection_vals, label="InfectionProbability(age)")
         ax[0, 0].set_xlabel("Age")
         ax[0, 0].set_ylabel("Rate")
         ax[0, 0].legend()
         ax[0, 0].grid(True)
-
 
         ax[0, 1].bar(genders, [gender_infection_proba(gender) for gender in genders], color='darkgreen')
         ax[0, 1].set_title("InfectionProbability(gender)")
@@ -311,6 +318,9 @@ class Simulation:
         ax2[1, 3].bar(masks, [mask_immunity_loss_proba(mask) for mask in masks], color='red')
         ax2[1, 3].set_title("ImmunityLossProbability(wearing_mask)")
 
+        fig1.savefig('figures/functions1.png')
+        fig2.savefig('figures/functions2.png')
+
     def plot_rates(self):
         fig, ax = plt.subplots(1, 4, figsize=(15, 10))
 
@@ -338,6 +348,8 @@ class Simulation:
         ax[3].set_ylabel("Rate")
         ax[3].grid(True)
 
+        fig.savefig('figures/rates_distribution.png')
+
     def plot_state_history(self):
         """Rysowanie wykresu rozkładu stanów w czasie."""
         time_steps = range(len(self.state_history))
@@ -348,7 +360,7 @@ class Simulation:
         dead = [state["D"] for state in self.state_history]
 
         # Tworzymy wykres
-        plt.figure(figsize=(10, 6))
+        f, ax = plt.subplots(1, 1, figsize=(15, 6))
         plt.plot(time_steps, susceptible, label="S - Susceptible", color="blue")
         plt.plot(time_steps, exposed, label="E - Exposed", color="yellow")
         plt.plot(time_steps, infected, label="I - Infected", color="red")
@@ -356,11 +368,16 @@ class Simulation:
         plt.plot(time_steps, dead, label="D - Dead", color="black")
 
         # Dodajemy parametry config do tytułu wykresu
-        title = f"Agent States Over Time\n"
-        title += f"Num Agents: {self.config.num_agents}, Minimum Recovery Period: {self.config.recovery_period}, \n Minimum Mortality Period: {self.config.mortality_period}, \n Minimum Immunity Loss Period: {self.config.immunity_loss_period}, Infection Radius: {self.config.infection_radius}"
+        title = f"Agent States Over Time"
         plt.title(title)
 
         plt.xlabel("Time Step")
         plt.ylabel("Number of Agents")
         plt.legend()
         plt.grid(True)
+
+        text = 'Configuration parameters:\n' + self.config.params_values_text()
+        box = dict(boxstyle='round', facecolor='grey', alpha=0.15)
+        ax.text(1.03, 0.98, text, transform=ax.transAxes, fontsize=8, verticalalignment='top', bbox=box)
+        plt.tight_layout()
+        plt.savefig('figures/agent_state_history.png')
