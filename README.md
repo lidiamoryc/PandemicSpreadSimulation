@@ -52,8 +52,4 @@ Biblioteki:
 
 Aby zainstalować wymagane biblioteki, należy użyć polecenia:
 ```bash
-Skopiuj kod
-
-
-```bash
 pip install -r requirements.txt
